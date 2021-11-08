@@ -1,1 +1,1 @@
-# app-qr-code-bot
+# app-asakabank-bot
