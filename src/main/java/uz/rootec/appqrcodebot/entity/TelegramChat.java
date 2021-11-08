@@ -26,4 +26,5 @@ public class TelegramChat extends AbstractEntity {
     private String phoneNumber;
 
     private Integer attempt;
+    private String specify;
 }

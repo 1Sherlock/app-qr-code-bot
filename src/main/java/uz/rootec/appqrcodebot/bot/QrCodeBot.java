@@ -15,10 +15,12 @@ import uz.rootec.appqrcodebot.entity.enums.TelegramChatStatus;
 import uz.rootec.appqrcodebot.repository.TelegramChatRepository;
 import uz.rootec.appqrcodebot.service.BotService;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class AsakaBot extends TelegramLongPollingBot {
+public class QrCodeBot extends TelegramLongPollingBot {
 
     @Value("${bot.token}")
     private String botToken;
@@ -36,16 +38,26 @@ public class AsakaBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
+            if (telegramChatRepository.existsByChatId(update.getMessage().getChatId()) && telegramChatRepository.findByChatId(update.getMessage().getChatId()).getStatus().equals(TelegramChatStatus.ENTER_PHONE)){
+                if (update.getMessage().hasContact()){
+                    Contact contact = update.getMessage().getContact();
+                    botService.enterPhone(update, contact.getPhoneNumber());
+                } else if (update.getMessage().hasText()){
+                    String text = update.getMessage().getText();
+                    botService.enterPhone(update, text);
+                }
+            }else
             if (update.getMessage().hasText()) {
 
                 String text = update.getMessage().getText();
 
-
-
-            } else if (update.getMessage().hasContact()) {
-                Contact contact = update.getMessage().getContact();
-                Long chatId = update.getMessage().getChatId();
-                TelegramChat byChatId = telegramChatRepository.findByChatId(chatId);
+                if (text.equals("/start")) {
+                    botService.welcomeText(update);
+                } else if (telegramChatRepository.existsByChatId(update.getMessage().getChatId())&& telegramChatRepository.findByChatId(update.getMessage().getChatId()).getStatus().equals(TelegramChatStatus.ENTER_SPECIFY)){
+                    botService.enterSpecify(update);
+                }else if (telegramChatRepository.existsByChatId(update.getMessage().getChatId())&& telegramChatRepository.findByChatId(update.getMessage().getChatId()).getStatus().equals(TelegramChatStatus.ENTER_FIO)){
+                    botService.enterFio(update);
+                }
 
 
             }
@@ -59,13 +71,8 @@ public class AsakaBot extends TelegramLongPollingBot {
 //                this.execute(sendMessage);
 
                 if (data.startsWith("language#")) {
-//                    execute(botService.deleteTopMessage(update));
-//
-//                    if (data.endsWith("uzbek")) {
-//                        botService.setLang(update, "uz");
-//                    } else {
-//                        botService.setLang(update, "ru");
-//                    }
+                    execute(botService.deleteTopMessage(update));
+                    botService.setLang(update, data.endsWith("uz") ? "uz" : "ru");
                 }
 
             } catch (Exception e) {
